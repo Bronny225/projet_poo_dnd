@@ -47,4 +47,11 @@ class Action:
     def __init__(self, nom, lanceur, cible=None):
         self.nom = nom
         self.lanceur = lanceur # Qui fait l'action
-        self.cible = cible     # Sur qui (peut être vide pour une invocation)                    
+        self.cible = cible     # Sur qui (peut être vide pour une invocation)  
+
+
+
+class Environnement:
+    def __init__(self, nom, type_bonus):
+        self.nom = nom
+        self.type_bonus = type_bonus # ex: "Feu" ou "Poison"                              

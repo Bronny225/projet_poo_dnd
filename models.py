@@ -1,57 +1,58 @@
+import random
+
 class Creature:
-    def __init__(self, nom, description, pv, defense, type_degats):
+    """Classe mère gérant la structure de base de toute entité au combat."""
+    def __init__(self, nom, pv, ca, type_degat):
         self.nom = nom
-        self.description = description
         self.pv = pv
-        self.pv_max = pv # Utile pour ne pas soigner au-delà du max
-        self.defense = defense # La Classe d'Armure (CA) 
-        self.type_degats = type_degats
-        self.etats = [] # Pour gérer "paralysé", "empoisonné", etc. 
+        self.max_pv = pv
+        self.ca = ca  # Classe d'Armure (Défense)
+        self.type_degat = type_degat
+        self.initiative = 0
 
-    def recevoir_degats(self, montant):
-        """Réduit les PV et s'assure qu'ils ne tombent pas sous 0."""
-        self.pv -= montant
-        if self.pv < 0:
-            self.pv = 0
+    def est_vivante(self):
+        """Vérifie si la créature a encore des points de vie."""
+        return self.pv > 0
 
+    def lancer_initiative(self):
+        """Génère un score d'initiative (1d20)."""
+        self.initiative = random.randint(1, 20)
+        return self.initiative
 
+    def recevoir_degats(self, montant, type_attaque=None):
+        self.pv = max(0, self.pv - montant)
+        return montant
 
-class Heros(Creature):
-    def __init__(self, nom, description, pv, defense, type_degats, arme):
-        super().__init__(nom, description, pv, defense, type_degats)
+    def attaquer(self, cible, moteur_calcul):
+        return moteur_calcul.calculer_attaque(self, cible)
+
+class Hero(Creature):
+    """Classe représentant les figures historiques (Joueurs)."""
+    def __init__(self, nom, pv, ca, type_degat, arme, histoire, special=None):
+        super().__init__(nom, pv, ca, type_degat)
         self.arme = arme
-        self.compagnon = None # Pour stocker le "Lion du Mali" par exemple
-
-    def invoquer(self, nom_entite):
-        """Prépare l'arrivée d'un allié sur le terrain."""
-        self.compagnon = nom_entite
-    def __init__(self, nom, description, pv, defense, type_degats, arme):
-        # super() appelle le constructeur de Creature pour remplir le nom, pv, etc.
-        super().__init__(nom, description, pv, defense, type_degats)
-        self.arme = arme
-        self.inventaire = []
+        self.histoire = histoire
+        self.type_special = special # 'invocation', 'contextuel', 'eveil'
+        self.special_disponible = True
 
 class Monstre(Creature):
-    def __init__(self, nom, description, pv, defense, type_degats, resistances):
-        super().__init__(nom, description, pv, defense, type_degats)
-        self.resistances = resistances
-        self.est_en_eveil = False # Passe à True si les PV sont bas
+    """Classe représentant les adversaires (PNJ)."""
+    def __init__(self, nom, pv, ca, type_degat, resistance, environnement_natal):
+        super().__init__(nom, pv, ca, type_degat)
+        self.resistance = resistance
+        # Chaque monstre possède maintenant son propre objet Environnement
+        self.environnement_natal = environnement_natal 
 
-    def verifier_seuil_eveil(self):
-        """Vérifie si le monstre doit passer en mode Éveil (ex: < 30% PV)."""
-        if self.pv <= (self.pv_max * 0.3):
-            self.est_en_eveil = True
-
-
-class Action:
-    def __init__(self, nom, lanceur, cible=None):
-        self.nom = nom
-        self.lanceur = lanceur # Qui fait l'action
-        self.cible = cible     # Sur qui (peut être vide pour une invocation)  
-
-
+    def recevoir_degats(self, montant, type_attaque=None):
+        if type_attaque == self.resistance:
+            montant //= 2
+        return super().recevoir_degats(montant)
 
 class Environnement:
-    def __init__(self, nom, type_bonus):
+    """Classe gérant les lieux de combat liés aux monstres."""
+    def __init__(self, nom, type_terrain):
         self.nom = nom
-        self.type_bonus = type_bonus # ex: "Feu" ou "Poison"                              
+        self.type_terrain = type_terrain # "Savane", "Aquatique", etc.
+
+    def __str__(self):
+        return self.nom
